@@ -1,2 +1,3 @@
 # LiteHouse
-LiteHouse is a sleek and lightweight SQLite viewer and query tool for developers and data explorers. Instantly inspect, search, and run SQL queries on your local SQLite databases with ease. Perfect for debugging, data analysis, or quick inspections.
+
+LiteHouse is a sleek SQL workbench for file-based data. Drag in CSV, Parquet, JSON, or SQLite and start querying instantly—no imports needed. Powered by DuckDB with a Next.js UI and Python backend. Inspect schemas, join across files, paginate results, and export with a click.
