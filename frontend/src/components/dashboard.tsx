@@ -10,7 +10,6 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { SchemaExplorer } from "@/components/dashboard/schema-explorer";
-import { FileUploadZone } from "@/components/dashboard/file-upload-zone";
 import { SqlEditor } from "@/components/dashboard/sql-editor";
 import { ResultsDisplay } from "@/components/dashboard/results-display";
 import { MetadataPanel } from "@/components/dashboard/metadata-panel";
@@ -47,7 +46,11 @@ export function Dashboard() {
     <SidebarProvider>
       <div className="flex h-screen w-full">
         {/* Left Sidebar - Schema Explorer */}
-        <SchemaExplorer uploadedFiles={uploadedFiles} sessionId={sessionId} />
+        <SchemaExplorer 
+          uploadedFiles={uploadedFiles} 
+          sessionId={sessionId}
+          onFilesUploaded={setUploadedFiles}
+        />
 
         {/* Main Content Area */}
         <div className="flex flex-col flex-1">
@@ -60,18 +63,8 @@ export function Dashboard() {
               {/* Central Work Area */}
               <ResizablePanel defaultSize={75} minSize={60}>
                 <ResizablePanelGroup direction="vertical" className="h-full">
-                  {/* File Upload Zone */}
-                  <ResizablePanel defaultSize={25} minSize={15}>
-                    <FileUploadZone
-                      onFilesUploaded={setUploadedFiles}
-                      sessionId={sessionId}
-                    />
-                  </ResizablePanel>
-
-                  <ResizableHandle withHandle />
-
                   {/* SQL Editor */}
-                  <ResizablePanel defaultSize={35} minSize={25}>
+                  <ResizablePanel defaultSize={50} minSize={30}>
                     <SqlEditor
                       onQueryExecute={setQueryResults}
                       isExecuting={isExecuting}
@@ -84,7 +77,7 @@ export function Dashboard() {
                   <ResizableHandle withHandle />
 
                   {/* Results Display */}
-                  <ResizablePanel defaultSize={40} minSize={25}>
+                  <ResizablePanel defaultSize={50} minSize={30}>
                     <ResultsDisplay
                       results={queryResults}
                       isExecuting={isExecuting}
