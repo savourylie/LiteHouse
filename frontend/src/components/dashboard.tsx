@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   ResizablePanelGroup,
@@ -22,6 +22,11 @@ export function Dashboard() {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [queryResults, setQueryResults] = useState<any>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [tables, setTables] = useState<any[]>([]);
+
+  const handleTablesChanged = useCallback((newTables: any[]) => {
+    setTables(newTables);
+  }, []);
 
   // Create real session with backend API
   useEffect(() => {
@@ -60,6 +65,7 @@ export function Dashboard() {
           uploadedFiles={uploadedFiles} 
           sessionId={sessionId}
           onFilesUploaded={setUploadedFiles}
+          onTablesChanged={handleTablesChanged}
         />
 
         {/* Main Content Area */}
@@ -100,7 +106,7 @@ export function Dashboard() {
 
               {/* Right Sidebar - Metadata Panel */}
               <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-                <MetadataPanel uploadedFiles={uploadedFiles} />
+                <MetadataPanel tables={tables} sessionId={sessionId} />
               </ResizablePanel>
             </ResizablePanelGroup>
           </div>

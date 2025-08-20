@@ -24,6 +24,7 @@ interface SchemaExplorerProps {
   uploadedFiles: any[];
   sessionId: string;
   onFilesUploaded: (files: any[]) => void;
+  onTablesChanged: (tables: any[]) => void;
 }
 
 interface TableWithSchema {
@@ -36,6 +37,7 @@ export function SchemaExplorer({
   uploadedFiles,
   sessionId,
   onFilesUploaded,
+  onTablesChanged,
 }: SchemaExplorerProps) {
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
   const [tables, setTables] = useState<TableWithSchema[]>([]);
@@ -56,6 +58,7 @@ export function SchemaExplorer({
             isLoadingSchema: false,
           }));
           setTables(tablesWithSchema);
+          onTablesChanged(tablesWithSchema);
         }
       } catch (error) {
         console.error("Failed to fetch tables:", error);
@@ -136,92 +139,97 @@ export function SchemaExplorer({
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-4">
-        {tables.length === 0 ? (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Upload files to see tables and schemas
-            </p>
-            <FileUploadZone 
-              sessionId={sessionId} 
-              onFilesUploaded={onFilesUploaded} 
-            />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {isLoadingTables && (
-              <div className="flex items-center justify-center p-4">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            )}
-            
-            {tables.map((table) => (
-              <Card key={table.info.name} className="overflow-hidden">
-                <div className="p-3">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between p-0 h-auto"
-                    onClick={() => toggleTableExpansion(table.info.name)}
-                  >
-                    <div className="flex items-center gap-2">
-                      {getFileTypeIcon(table.info.kind)}
-                      <span className="font-medium text-sm">{table.info.name}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {table.info.kind.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {table.info.db && (
-                        <Badge variant="outline" className="text-xs">
-                          {table.info.db}
-                        </Badge>
-                      )}
-                      {expandedTables.has(table.info.name) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  </Button>
-
-                  {expandedTables.has(table.info.name) && (
-                    <div className="mt-3">
-                      {table.isLoadingSchema ? (
-                        <div className="flex items-center justify-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="ml-2 text-xs text-muted-foreground">
-                            Loading schema...
-                          </span>
-                        </div>
-                      ) : table.schema?.columns ? (
-                        <div className="space-y-1">
-                          {table.schema.columns.map((column, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between text-xs py-1 px-2 rounded bg-muted/50"
-                            >
-                              <span className="font-medium">{column.name}</span>
-                              <Badge
-                                variant="outline"
-                                className="text-xs px-1 py-0"
-                              >
-                                {column.type}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground p-2">
-                          No schema information available
-                        </p>
-                      )}
-                    </div>
-                  )}
+      <SidebarContent className="p-4 flex flex-col">
+        <div className="flex-1">
+          {tables.length === 0 ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Upload files to see tables and schemas
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {isLoadingTables && (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
+              )}
+              
+              {tables.map((table) => (
+                <Card key={table.info.name} className="overflow-hidden">
+                  <div className="p-3">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-between p-0 h-auto"
+                      onClick={() => toggleTableExpansion(table.info.name)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {getFileTypeIcon(table.info.kind)}
+                        <span className="font-medium text-sm">{table.info.name}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {table.info.kind.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {table.info.db && (
+                          <Badge variant="outline" className="text-xs">
+                            {table.info.db}
+                          </Badge>
+                        )}
+                        {expandedTables.has(table.info.name) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </div>
+                    </Button>
+
+                    {expandedTables.has(table.info.name) && (
+                      <div className="mt-3">
+                        {table.isLoadingSchema ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              Loading schema...
+                            </span>
+                          </div>
+                        ) : table.schema?.columns ? (
+                          <div className="space-y-1">
+                            {table.schema.columns.map((column, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between text-xs py-1 px-2 rounded bg-muted/50"
+                              >
+                                <span className="font-medium">{column.name}</span>
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1 py-0"
+                                >
+                                  {column.type}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground p-2">
+                            No schema information available
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="mt-4 pt-4 border-t">
+          <FileUploadZone 
+            sessionId={sessionId} 
+            onFilesUploaded={onFilesUploaded} 
+          />
+        </div>
       </SidebarContent>
     </Sidebar>
   );
