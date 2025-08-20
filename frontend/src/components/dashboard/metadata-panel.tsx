@@ -44,14 +44,16 @@ import {
 interface MetadataPanelProps {
   tables: any[];
   sessionId: string;
+  defaultCollapsed?: boolean;
+  isMobile?: boolean;
 }
 
 
-export function MetadataPanel({ tables, sessionId }: MetadataPanelProps) {
+export function MetadataPanel({ tables, sessionId, defaultCollapsed = false, isMobile = false }: MetadataPanelProps) {
   const [selectedTableName, setSelectedTableName] = useState<string | null>(
     tables.length > 0 ? tables[0].info?.name : null
   );
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(defaultCollapsed);
   const [selectedTableSchema, setSelectedTableSchema] = useState<any>(null);
   const [isLoadingSchema, setIsLoadingSchema] = useState(false);
 
@@ -146,7 +148,7 @@ export function MetadataPanel({ tables, sessionId }: MetadataPanelProps) {
   const totalTables = tables.length;
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className={`${isMobile ? 'h-auto' : 'h-full'} flex flex-col`}>
       <Collapsible open={!isMinimized} onOpenChange={setIsMinimized}>
         <CardHeader className="pb-3">
           <CollapsibleTrigger asChild>
@@ -244,13 +246,13 @@ export function MetadataPanel({ tables, sessionId }: MetadataPanelProps) {
                         <div className="flex gap-1 flex-wrap">
                           {Array.from(new Set(selectedTableSchema.columns.map((col: any) => col.type)))
                             .slice(0, 4)
-                            .map((type: string) => (
+                            .map((type) => (
                               <Badge
-                                key={type}
+                                key={type as string}
                                 variant="outline"
                                 className="text-xs"
                               >
-                                {type}
+                                {type as string}
                               </Badge>
                             ))}
                         </div>

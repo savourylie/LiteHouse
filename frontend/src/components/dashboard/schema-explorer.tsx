@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2,
+  X,
 } from "lucide-react";
 
 interface SchemaExplorerProps {
@@ -25,6 +26,8 @@ interface SchemaExplorerProps {
   sessionId: string;
   onFilesUploaded: (files: any[]) => void;
   onTablesChanged: (tables: any[]) => void;
+  onClose?: () => void;
+  isMobile?: boolean;
 }
 
 interface TableWithSchema {
@@ -38,6 +41,8 @@ export function SchemaExplorer({
   sessionId,
   onFilesUploaded,
   onTablesChanged,
+  onClose,
+  isMobile,
 }: SchemaExplorerProps) {
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
   const [tables, setTables] = useState<TableWithSchema[]>([]);
@@ -131,11 +136,18 @@ export function SchemaExplorer({
   };
 
   return (
-    <Sidebar className="border-r">
+    <Sidebar className={`border-r ${isMobile ? 'w-full' : ''}`}>
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <Database className="h-5 w-5" />
-          <h3 className="font-semibold">Schema</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            <h3 className="font-semibold">Schema</h3>
+          </div>
+          {isMobile && onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose} className="p-2">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </SidebarHeader>
 
