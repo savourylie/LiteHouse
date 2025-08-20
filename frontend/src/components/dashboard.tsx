@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
-import { PanelRightOpen } from "lucide-react";
+import { PanelRightOpen, PanelLeftOpen } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   ResizablePanelGroup,
@@ -27,6 +27,7 @@ export function Dashboard() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [tables, setTables] = useState<any[]>([]);
   const [showSidebars, setShowSidebars] = useState(true);
+  const [isSchemaExplorerCollapsed, setIsSchemaExplorerCollapsed] = useState(false);
   const [isMetadataPanelFolded, setIsMetadataPanelFolded] = useState(false);
   
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -67,33 +68,35 @@ export function Dashboard() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
-        {/* Left Sidebar - Schema Explorer - Hidden on mobile */}
-        {(!isMobile || showSidebars) && (
-          <div className={`${isMobile ? 'absolute inset-0 z-50 bg-background' : ''}`}>
-            <SchemaExplorer 
-              uploadedFiles={uploadedFiles} 
-              sessionId={sessionId}
-              onFilesUploaded={setUploadedFiles}
-              onTablesChanged={handleTablesChanged}
-              onClose={isMobile ? () => setShowSidebars(false) : undefined}
-              isMobile={isMobile}
-            />
-          </div>
-        )}
+      <div className="flex flex-col h-screen w-full">
+        {/* Header - spans entire viewport width */}
+        <DashboardHeader 
+          sessionId={sessionId} 
+          onToggleSidebars={isMobile ? () => setShowSidebars(!showSidebars) : undefined}
+          isMobile={isMobile}
+        />
 
-        {/* Main Content Area */}
-        <div className="flex flex-col flex-1">
-          {/* Header */}
-          <DashboardHeader 
-            sessionId={sessionId} 
-            onToggleSidebars={isMobile ? () => setShowSidebars(!showSidebars) : undefined}
-            showSidebars={showSidebars}
-            isMobile={isMobile}
-          />
+        {/* Content Area - sidebar and main content */}
+        <div className="flex flex-1">
+          {/* Left Sidebar - Schema Explorer - Hidden on mobile or when collapsed */}
+          {(!isMobile || showSidebars) && !isSchemaExplorerCollapsed && (
+            <div className={`${isMobile ? 'fixed top-[57px] left-0 right-0 bottom-0 z-50' : ''}`}>
+              <SchemaExplorer 
+                uploadedFiles={uploadedFiles} 
+                sessionId={sessionId}
+                onFilesUploaded={setUploadedFiles}
+                onTablesChanged={handleTablesChanged}
+                onClose={isMobile ? () => setShowSidebars(false) : undefined}
+                onToggleCollapse={!isMobile ? () => setIsSchemaExplorerCollapsed(!isSchemaExplorerCollapsed) : undefined}
+                isMobile={isMobile}
+              />
+            </div>
+          )}
 
-          {/* Main Content with Responsive Layout */}
-          <div className="flex-1 p-2 md:p-4">
+          {/* Main Content Area */}
+          <div className="flex flex-col flex-1">
+            {/* Main Content with Responsive Layout */}
+            <div className="flex-1 p-2 md:p-4">
             {isMobile ? (
               /* Mobile Layout - Stack vertically */
               <div className="h-full flex flex-col space-y-2">
@@ -236,11 +239,26 @@ export function Dashboard() {
                 )}
               </ResizablePanelGroup>
             )}
-          </div>
+            </div>
 
-          {/* Footer */}
-          <DashboardFooter />
+            {/* Footer */}
+            <DashboardFooter />
+          </div>
         </div>
+
+        {/* Collapsed Schema Explorer Button */}
+        {isSchemaExplorerCollapsed && !isMobile && (
+          <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSchemaExplorerCollapsed(false)}
+              className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Folded Metadata Panel Overlay */}
         {isMetadataPanelFolded && !isMobile && (

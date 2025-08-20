@@ -2,17 +2,15 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Database, HelpCircle, RotateCcw, Menu } from "lucide-react";
 
 interface DashboardHeaderProps {
   sessionId: string;
   onToggleSidebars?: () => void;
-  showSidebars?: boolean;
   isMobile?: boolean;
 }
 
-export function DashboardHeader({ sessionId, onToggleSidebars, showSidebars, isMobile }: DashboardHeaderProps) {
+export function DashboardHeader({ sessionId, onToggleSidebars, isMobile }: DashboardHeaderProps) {
   const handleClearSession = () => {
     // TODO: Implement clear session logic
     window.location.reload();
@@ -23,7 +21,7 @@ export function DashboardHeader({ sessionId, onToggleSidebars, showSidebars, isM
       <div className="flex items-center justify-between">
         {/* Left side - Brand and Mobile Menu */}
         <div className="flex items-center gap-2 md:gap-4">
-          {isMobile && onToggleSidebars ? (
+          {isMobile && onToggleSidebars && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -32,8 +30,6 @@ export function DashboardHeader({ sessionId, onToggleSidebars, showSidebars, isM
             >
               <Menu className="h-4 w-4" />
             </Button>
-          ) : (
-            <SidebarTrigger />
           )}
           <div className="flex items-center gap-2 md:gap-3">
             <div className="flex items-center gap-2">
