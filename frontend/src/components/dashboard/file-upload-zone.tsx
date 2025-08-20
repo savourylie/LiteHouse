@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api";
 import {
   Upload,
   File,
@@ -30,9 +31,10 @@ interface UploadedFile {
   size: number;
   type: string;
   uploadedAt: Date;
-  rowCount?: number;
-  status: "uploading" | "processing" | "completed" | "error";
+  tableName?: string;
+  status: "uploading" | "completed" | "error";
   progress: number;
+  error?: string;
 }
 
 export function FileUploadZone({
@@ -42,8 +44,74 @@ export function FileUploadZone({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
 
+  // Notify parent when files change
+  useEffect(() => {
+    const completedFiles = uploadedFiles.filter(f => f.status === "completed");
+    onFilesUploaded(completedFiles);
+  }, [uploadedFiles, onFilesUploaded]);
+
+  const uploadFileToBackend = useCallback(async (uploadFile: UploadedFile, file: File) => {
+    try {
+      // Update progress to 50% while uploading
+      setUploadedFiles((prev) =>
+        prev.map((f) => (f.id === uploadFile.id ? { ...f, progress: 50 } : f))
+      );
+
+      const response = await apiClient.uploadFile(file, sessionId);
+      
+      if (response.data) {
+        // Upload successful
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? {
+                  ...f,
+                  status: "completed",
+                  progress: 100,
+                  tableName: response.data!.name,
+                }
+              : f
+          )
+        );
+        toast.success(`${file.name} uploaded as ${response.data.name}`);
+      } else {
+        // Upload failed
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? {
+                  ...f,
+                  status: "error",
+                  error: response.error,
+                }
+              : f
+          )
+        );
+        toast.error(`Upload failed: ${response.error}`);
+      }
+    } catch (error) {
+      setUploadedFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? {
+                ...f,
+                status: "error",
+                error: "Upload failed",
+              }
+            : f
+        )
+      );
+      toast.error("Upload failed");
+    }
+  }, [sessionId]);
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
+      if (!sessionId) {
+        toast.error("No session available. Please refresh the page.");
+        return;
+      }
+
       const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
         id: `${file.name}_${Date.now()}_${Math.random()
           .toString(36)
@@ -58,63 +126,13 @@ export function FileUploadZone({
 
       setUploadedFiles((prev) => [...prev, ...newFiles]);
 
-      // Simulate file upload and processing
-      for (const file of newFiles) {
-        await simulateFileUpload(file);
+      // Upload files to backend
+      for (const uploadFile of newFiles) {
+        await uploadFileToBackend(uploadFile, acceptedFiles.find(f => f.name === uploadFile.name)!);
       }
-
-      // Update parent component
-      const completedFiles = uploadedFiles.filter(
-        (f) => f.status === "completed"
-      );
-      onFilesUploaded(completedFiles);
     },
-    [uploadedFiles, onFilesUploaded]
+    [sessionId, uploadFileToBackend]
   );
-
-  const simulateFileUpload = async (file: UploadedFile) => {
-    // Simulate upload progress
-    for (let progress = 0; progress <= 100; progress += 10) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      setUploadedFiles((prev) =>
-        prev.map((f) => (f.id === file.id ? { ...f, progress } : f))
-      );
-    }
-
-    // Simulate processing
-    setUploadedFiles((prev) =>
-      prev.map((f) => (f.id === file.id ? { ...f, status: "processing" } : f))
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Complete upload
-    const mockRowCount = Math.floor(Math.random() * 10000) + 100;
-    setUploadedFiles((prev) =>
-      prev.map((f) =>
-        f.id === file.id
-          ? {
-              ...f,
-              status: "completed",
-              rowCount: mockRowCount,
-              // Mock column schema
-              columns: generateMockColumns(file.type),
-            }
-          : f
-      )
-    );
-
-    toast.success(`${file.name} uploaded successfully`);
-  };
-
-  const generateMockColumns = (fileType: string) => {
-    const commonColumns = [
-      { name: "id", type: "INTEGER", nullable: false },
-      { name: "name", type: "VARCHAR", nullable: true },
-      { name: "created_at", type: "TIMESTAMP", nullable: false },
-    ];
-    return commonColumns;
-  };
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -162,10 +180,6 @@ export function FileUploadZone({
 
   const removeFile = (fileId: string) => {
     setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
-    const remainingFiles = uploadedFiles.filter(
-      (f) => f.id !== fileId && f.status === "completed"
-    );
-    onFilesUploaded(remainingFiles);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -261,15 +275,15 @@ export function FileUploadZone({
                     </div>
                   )}
 
-                  {file.status === "processing" && (
-                    <Badge variant="outline" className="text-xs">
-                      Processing...
+                  {file.status === "completed" && file.tableName && (
+                    <Badge variant="default" className="text-xs">
+                      {file.tableName}
                     </Badge>
                   )}
 
-                  {file.status === "completed" && file.rowCount && (
-                    <Badge variant="default" className="text-xs">
-                      {file.rowCount.toLocaleString()} rows
+                  {file.status === "error" && (
+                    <Badge variant="destructive" className="text-xs">
+                      Error
                     </Badge>
                   )}
 

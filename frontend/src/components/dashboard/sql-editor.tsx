@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api";
 import {
   Play,
   Square,
@@ -91,8 +92,8 @@ export function SqlEditor({
       return;
     }
 
-    if (uploadedFiles.length === 0) {
-      toast.error("Please upload a file first");
+    if (!sessionId) {
+      toast.error("No session available. Please refresh the page.");
       return;
     }
 
@@ -100,38 +101,46 @@ export function SqlEditor({
     setQueryStatus("idle");
     setErrorMessage("");
 
-    const startTime = Date.now();
-
     try {
-      // Simulate API call to backend
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000 + Math.random() * 2000)
+      const response = await apiClient.executeQuery(
+        {
+          sql: query.trim(),
+          limit: 100,
+          offset: 0,
+        },
+        sessionId
       );
 
-      // Mock successful response
-      const mockResults = {
-        columns: [
-          { name: "id", type: "INTEGER" },
-          { name: "name", type: "VARCHAR" },
-          { name: "email", type: "VARCHAR" },
-          { name: "created_at", type: "TIMESTAMP" },
-        ],
-        rows: Array.from({ length: 25 }, (_, i) => ({
-          id: i + 1,
-          name: `User ${i + 1}`,
-          email: `user${i + 1}@example.com`,
-          created_at: new Date(
-            Date.now() - Math.random() * 10000000000
-          ).toISOString(),
-        })),
-        totalRows: 1250,
-        executionTime: Date.now() - startTime,
-      };
+      if (response.data) {
+        // Query successful
+        setExecutionTime(response.data.duration_ms);
+        setQueryStatus("success");
+        
+        // Transform backend response to match frontend expectations
+        // Backend returns rows as arrays, but frontend expects objects
+        const transformedRows = response.data.rows.map((row: any[]) => {
+          const rowObject: { [key: string]: any } = {};
+          response.data.columns.forEach((column, index) => {
+            rowObject[column.name] = row[index];
+          });
+          return rowObject;
+        });
 
-      setExecutionTime(Date.now() - startTime);
-      setQueryStatus("success");
-      onQueryExecute(mockResults);
-      toast.success("Query executed successfully");
+        const transformedResults = {
+          columns: response.data.columns,
+          rows: transformedRows,
+          totalRows: response.data.total_est || response.data.rows.length,
+          executionTime: response.data.duration_ms,
+        };
+        
+        onQueryExecute(transformedResults);
+        toast.success(`Query executed successfully (${response.data.duration_ms.toFixed(1)}ms)`);
+      } else {
+        // Query failed
+        setErrorMessage(response.error || "Query execution failed");
+        setQueryStatus("error");
+        toast.error(response.error || "Query execution failed");
+      }
     } catch (error) {
       const errorMsg =
         error instanceof Error ? error.message : "Query execution failed";

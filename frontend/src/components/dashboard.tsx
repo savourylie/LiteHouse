@@ -8,12 +8,14 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { SchemaExplorer } from "@/components/dashboard/schema-explorer";
 import { SqlEditor } from "@/components/dashboard/sql-editor";
 import { ResultsDisplay } from "@/components/dashboard/results-display";
 import { MetadataPanel } from "@/components/dashboard/metadata-panel";
 import { DashboardFooter } from "@/components/dashboard/footer";
+import { apiClient } from "@/lib/api";
 
 export function Dashboard() {
   const [sessionId, setSessionId] = useState<string>("");
@@ -21,11 +23,19 @@ export function Dashboard() {
   const [queryResults, setQueryResults] = useState<any>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  // Generate session ID only on client side to avoid hydration mismatch
+  // Create real session with backend API
   useEffect(() => {
-    setSessionId(
-      `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    );
+    const createSession = async () => {
+      const response = await apiClient.createSession();
+      if (response.data) {
+        setSessionId(response.data.session_id);
+        toast.success("Session created successfully");
+      } else {
+        toast.error(`Failed to create session: ${response.error}`);
+      }
+    };
+
+    createSession();
   }, []);
 
   // Don't render until sessionId is generated to avoid hydration mismatch
