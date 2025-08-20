@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { Button } from "@/components/ui/button";
+import { PanelRightOpen } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   ResizablePanelGroup,
@@ -25,6 +27,7 @@ export function Dashboard() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [tables, setTables] = useState<any[]>([]);
   const [showSidebars, setShowSidebars] = useState(true);
+  const [isMetadataPanelFolded, setIsMetadataPanelFolded] = useState(false);
   
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isTablet = useMediaQuery("(max-width: 1024px)");
@@ -120,6 +123,8 @@ export function Dashboard() {
                     sessionId={sessionId}
                     defaultCollapsed={true}
                     isMobile={true}
+                    isFolded={isMetadataPanelFolded}
+                    onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
                   />
                 </div>
               </div>
@@ -148,10 +153,30 @@ export function Dashboard() {
                         isExecuting={isExecuting}
                       />
                     </div>
-                    <div className="w-80 border-l">
-                      <MetadataPanel tables={tables} sessionId={sessionId} />
-                    </div>
+                    {!isMetadataPanelFolded && (
+                      <div className="w-80 border-l">
+                        <MetadataPanel 
+                          tables={tables} 
+                          sessionId={sessionId} 
+                          isFolded={isMetadataPanelFolded}
+                          onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
+                        />
+                      </div>
+                    )}
                   </div>
+                  {/* Floating toggle button for folded panel on tablet */}
+                  {isMetadataPanelFolded && (
+                    <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsMetadataPanelFolded(false)}
+                        className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
+                      >
+                        <PanelRightOpen className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </ResizablePanel>
               </ResizablePanelGroup>
             ) : (
@@ -183,12 +208,32 @@ export function Dashboard() {
                   </ResizablePanelGroup>
                 </ResizablePanel>
 
-                <ResizableHandle withHandle />
-
                 {/* Right Sidebar - Metadata Panel */}
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-                  <MetadataPanel tables={tables} sessionId={sessionId} />
-                </ResizablePanel>
+                {!isMetadataPanelFolded ? (
+                  <>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+                      <MetadataPanel 
+                        tables={tables} 
+                        sessionId={sessionId}
+                        isFolded={isMetadataPanelFolded}
+                        onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
+                      />
+                    </ResizablePanel>
+                  </>
+                ) : (
+                  /* Floating toggle button for folded panel on desktop */
+                  <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsMetadataPanelFolded(false)}
+                      className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
+                    >
+                      <PanelRightOpen className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </ResizablePanelGroup>
             )}
           </div>
@@ -196,6 +241,16 @@ export function Dashboard() {
           {/* Footer */}
           <DashboardFooter />
         </div>
+
+        {/* Folded Metadata Panel Overlay */}
+        {isMetadataPanelFolded && !isMobile && (
+          <MetadataPanel 
+            tables={tables} 
+            sessionId={sessionId}
+            isFolded={true}
+            onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
+          />
+        )}
 
         {/* Toast Notifications */}
         <Toaster />

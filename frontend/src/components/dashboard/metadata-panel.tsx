@@ -39,6 +39,8 @@ import {
   Eye,
   ChevronUp,
   HardDrive,
+  PanelRightClose,
+  PanelRightOpen,
 } from "lucide-react";
 
 interface MetadataPanelProps {
@@ -46,10 +48,12 @@ interface MetadataPanelProps {
   sessionId: string;
   defaultCollapsed?: boolean;
   isMobile?: boolean;
+  isFolded?: boolean;
+  onToggleFold?: () => void;
 }
 
 
-export function MetadataPanel({ tables, sessionId, defaultCollapsed = false, isMobile = false }: MetadataPanelProps) {
+export function MetadataPanel({ tables, sessionId, defaultCollapsed = false, isMobile = false, isFolded = false, onToggleFold }: MetadataPanelProps) {
   const [selectedTableName, setSelectedTableName] = useState<string | null>(
     tables.length > 0 ? tables[0].info?.name : null
   );
@@ -93,6 +97,51 @@ export function MetadataPanel({ tables, sessionId, defaultCollapsed = false, isM
 
   const selectedTable = tables.find((t) => t.info?.name === selectedTableName);
 
+  // If folded, show vertical bar
+  if (isFolded) {
+    return (
+      <div className="fixed right-0 top-0 h-full z-50 w-16">
+        <div className="h-full bg-slate-800 text-slate-100 border-l-2 border-slate-600 shadow-xl flex flex-col">
+          {/* Top section with close button */}
+          <div className="p-3 flex justify-center border-b border-slate-600">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleFold}
+              className="p-2 h-auto text-slate-100 hover:text-slate-800 hover:bg-slate-100"
+            >
+              <PanelRightClose className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {/* Middle section with vertical text */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-6">
+            <div className="writing-mode-vertical text-sm font-medium tracking-wide" style={{writingMode: 'vertical-rl', textOrientation: 'mixed'}}>
+              FILE DETAILS
+            </div>
+            
+            {tables.length > 0 && (
+              <div className="flex flex-col items-center gap-3">
+                <Eye className="h-6 w-6 text-slate-300" />
+                <Badge variant="outline" className="text-xs px-2 py-1 border-slate-500 text-slate-200 bg-slate-700">
+                  {tables.length}
+                </Badge>
+                <div className="writing-mode-vertical text-xs text-slate-400" style={{writingMode: 'vertical-rl', textOrientation: 'mixed'}}>
+                  TABLES
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Bottom section */}
+          <div className="p-3 border-t border-slate-600 flex justify-center">
+            <Database className="h-5 w-5 text-slate-400" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const getFileIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case "csv":
@@ -127,9 +176,21 @@ export function MetadataPanel({ tables, sessionId, defaultCollapsed = false, isM
     return (
       <Card className="h-full">
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            File Details
+          <CardTitle className="text-base flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              File Details
+            </div>
+            {onToggleFold && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleFold}
+                className="p-1 h-auto"
+              >
+                <PanelRightOpen className="h-4 w-4" />
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -149,22 +210,41 @@ export function MetadataPanel({ tables, sessionId, defaultCollapsed = false, isM
 
   return (
     <Card className={`${isMobile ? 'h-auto' : 'h-full'} flex flex-col`}>
-      <Collapsible open={!isMinimized} onOpenChange={setIsMinimized}>
-        <CardHeader className="pb-3">
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between cursor-pointer">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                File Details
-              </CardTitle>
-              {isMinimized ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronUp className="h-4 w-4" />
-              )}
-            </div>
-          </CollapsibleTrigger>
-        </CardHeader>
+        <Collapsible open={!isMinimized} onOpenChange={setIsMinimized}>
+          <CardHeader className="pb-3">
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between cursor-pointer">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  File Details
+                </CardTitle>
+                <div className="flex items-center gap-1">
+                  {onToggleFold && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFold();
+                      }}
+                      className="p-1 h-auto"
+                    >
+                      {isFolded ? (
+                        <PanelRightClose className="h-4 w-4" />
+                      ) : (
+                        <PanelRightOpen className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
+                  {isMinimized ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="h-4 w-4" />
+                  )}
+                </div>
+              </div>
+            </CollapsibleTrigger>
+          </CardHeader>
 
         <CollapsibleContent>
           <CardContent className="flex-1 space-y-4">
