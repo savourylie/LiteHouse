@@ -200,7 +200,7 @@ export function ResultsDisplay({ results, isExecuting }: ResultsDisplayProps) {
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col w-full max-w-full overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Query Results</CardTitle>
@@ -251,23 +251,24 @@ export function ResultsDisplay({ results, isExecuting }: ResultsDisplayProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 p-0 border-t">
-        <ScrollArea className="h-full">
-          <Table>
+      <CardContent className="flex-1 p-0 border-t overflow-hidden">
+        <div className="h-full w-full overflow-auto">
+          <div className="w-full max-w-full">
+            <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
                 {columns.map((column: Column) => (
                   <TableHead
                     key={column.name}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 w-40 text-left"
                     onClick={() => handleSort(column.name)}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{column.name}</span>
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="font-medium truncate">{column.name}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">
                         {column.type}
                       </Badge>
-                      <ArrowUpDown className="h-3 w-3" />
+                      <ArrowUpDown className="h-3 w-3 shrink-0" />
                     </div>
                   </TableHead>
                 ))}
@@ -277,15 +278,18 @@ export function ResultsDisplay({ results, isExecuting }: ResultsDisplayProps) {
               {rows.map((row: any, index: number) => (
                 <TableRow key={index}>
                   {columns.map((column: Column) => (
-                    <TableCell key={column.name} className="font-mono text-xs">
-                      {formatCellValue(row[column.name])}
+                    <TableCell key={column.name} className="font-mono text-xs w-40 px-2">
+                      <div className="truncate" title={String(row[column.name])}>
+                        {formatCellValue(row[column.name])}
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
-        </ScrollArea>
+            </Table>
+          </div>
+        </div>
       </CardContent>
 
       {/* Pagination Footer */}

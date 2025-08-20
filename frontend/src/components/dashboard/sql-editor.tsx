@@ -51,9 +51,7 @@ export function SqlEditor({
   sessionId,
   uploadedFiles,
 }: SqlEditorProps) {
-  const [query, setQuery] = useState(
-    "-- Welcome to LiteHouse SQL Editor\n-- Start by uploading a file and writing your SQL query\n\nSELECT * FROM your_table LIMIT 10;"
-  );
+  const [query, setQuery] = useState("");
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [queryStatus, setQueryStatus] = useState<"idle" | "success" | "error">(
     "idle"
@@ -115,7 +113,7 @@ export function SqlEditor({
         // Query successful
         setExecutionTime(response.data.duration_ms);
         setQueryStatus("success");
-        
+
         // Transform backend response to match frontend expectations
         // Backend returns rows as arrays, but frontend expects objects
         const transformedRows = response.data.rows.map((row: any[]) => {
@@ -132,9 +130,13 @@ export function SqlEditor({
           totalRows: response.data.total_est || response.data.rows.length,
           executionTime: response.data.duration_ms,
         };
-        
+
         onQueryExecute(transformedResults);
-        toast.success(`Query executed successfully (${response.data.duration_ms.toFixed(1)}ms)`);
+        toast.success(
+          `Query executed successfully (${response.data.duration_ms.toFixed(
+            1
+          )}ms)`
+        );
       } else {
         // Query failed
         setErrorMessage(response.error || "Query execution failed");

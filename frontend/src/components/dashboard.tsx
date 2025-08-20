@@ -132,61 +132,10 @@ export function Dashboard() {
                 </div>
               </div>
             ) : isTablet ? (
-              /* Tablet Layout - Simplified resizable */
-              <ResizablePanelGroup direction="vertical" className="h-full">
-                {/* SQL Editor */}
-                <ResizablePanel defaultSize={50} minSize={30}>
-                  <SqlEditor
-                    onQueryExecute={setQueryResults}
-                    isExecuting={isExecuting}
-                    setIsExecuting={setIsExecuting}
-                    sessionId={sessionId}
-                    uploadedFiles={uploadedFiles}
-                  />
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                {/* Results Display */}
-                <ResizablePanel defaultSize={50} minSize={30}>
-                  <div className="flex h-full">
-                    <div className="flex-1">
-                      <ResultsDisplay
-                        results={queryResults}
-                        isExecuting={isExecuting}
-                      />
-                    </div>
-                    {!isMetadataPanelFolded && (
-                      <div className="w-80 border-l">
-                        <MetadataPanel 
-                          tables={tables} 
-                          sessionId={sessionId} 
-                          isFolded={isMetadataPanelFolded}
-                          onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {/* Floating toggle button for folded panel on tablet */}
-                  {isMetadataPanelFolded && (
-                    <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsMetadataPanelFolded(false)}
-                        className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
-                      >
-                        <PanelRightOpen className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            ) : (
-              /* Desktop Layout - Full resizable panels */
-              <ResizablePanelGroup direction="horizontal" className="h-full">
-                {/* Central Work Area */}
-                <ResizablePanel defaultSize={75} minSize={60}>
+              /* Tablet Layout - Fixed sidebar with vertical resizable content */
+              <div className="flex h-full overflow-hidden">
+                {/* Central Work Area - Vertical layout */}
+                <div className="flex-1 overflow-hidden min-w-0">
                   <ResizablePanelGroup direction="vertical" className="h-full">
                     {/* SQL Editor */}
                     <ResizablePanel defaultSize={50} minSize={30}>
@@ -202,42 +151,90 @@ export function Dashboard() {
                     <ResizableHandle withHandle />
 
                     {/* Results Display */}
-                    <ResizablePanel defaultSize={50} minSize={30}>
+                    <ResizablePanel defaultSize={50} minSize={30} className="overflow-hidden">
                       <ResultsDisplay
                         results={queryResults}
                         isExecuting={isExecuting}
                       />
                     </ResizablePanel>
                   </ResizablePanelGroup>
-                </ResizablePanel>
-
-                {/* Right Sidebar - Metadata Panel */}
-                {!isMetadataPanelFolded ? (
-                  <>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-                      <MetadataPanel 
-                        tables={tables} 
+                </div>
+                
+                {/* Fixed Right Sidebar - File Details (always reserve space) */}
+                <div className="w-80 border-l bg-background flex-shrink-0">
+                  {!isMetadataPanelFolded ? (
+                    <MetadataPanel 
+                      tables={tables} 
+                      sessionId={sessionId} 
+                      isFolded={isMetadataPanelFolded}
+                      onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsMetadataPanelFolded(false)}
+                        className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
+                      >
+                        <PanelRightOpen className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Desktop Layout - Fixed sidebar with resizable central area */
+              <div className="flex h-full overflow-hidden">
+                {/* Central Work Area - Flexible */}
+                <div className="flex-1 overflow-hidden min-w-0">
+                  <ResizablePanelGroup direction="vertical" className="h-full">
+                    {/* SQL Editor */}
+                    <ResizablePanel defaultSize={50} minSize={30}>
+                      <SqlEditor
+                        onQueryExecute={setQueryResults}
+                        isExecuting={isExecuting}
+                        setIsExecuting={setIsExecuting}
                         sessionId={sessionId}
-                        isFolded={isMetadataPanelFolded}
-                        onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
+                        uploadedFiles={uploadedFiles}
                       />
                     </ResizablePanel>
-                  </>
-                ) : (
-                  /* Floating toggle button for folded panel on desktop */
-                  <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsMetadataPanelFolded(false)}
-                      className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
-                    >
-                      <PanelRightOpen className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </ResizablePanelGroup>
+
+                    <ResizableHandle withHandle />
+
+                    {/* Results Display */}
+                    <ResizablePanel defaultSize={50} minSize={30} className="overflow-hidden">
+                      <ResultsDisplay
+                        results={queryResults}
+                        isExecuting={isExecuting}
+                      />
+                    </ResizablePanel>
+                  </ResizablePanelGroup>
+                </div>
+
+                {/* Fixed Right Sidebar - File Details (always reserve space) */}
+                <div className="w-80 border-l bg-background flex-shrink-0">
+                  {!isMetadataPanelFolded ? (
+                    <MetadataPanel 
+                      tables={tables} 
+                      sessionId={sessionId}
+                      isFolded={isMetadataPanelFolded}
+                      onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsMetadataPanelFolded(false)}
+                        className="h-12 w-12 rounded-full shadow-lg border-2 bg-background/95 backdrop-blur-sm"
+                      >
+                        <PanelRightOpen className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
             </div>
 
@@ -260,15 +257,6 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Folded Metadata Panel Overlay */}
-        {isMetadataPanelFolded && !isMobile && (
-          <MetadataPanel 
-            tables={tables} 
-            sessionId={sessionId}
-            isFolded={true}
-            onToggleFold={() => setIsMetadataPanelFolded(!isMetadataPanelFolded)}
-          />
-        )}
 
         {/* Toast Notifications */}
         <Toaster />
